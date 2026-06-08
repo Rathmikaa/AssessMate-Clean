@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="AIAssessment.API/AIAssessment.API.csproj" />
+  <Project Path="AIAssessment.Application/AIAssessment.Application.csproj" />
+  <Project Path="AIAssessment.Domain/AIAssessment.Domain.csproj" />
+  <Project Path="AIAssessment.Infrastructure/AIAssessment.Infrastructure.csproj" />
+</Solution>
