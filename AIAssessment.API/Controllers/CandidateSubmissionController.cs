@@ -12,7 +12,7 @@ namespace AIAssessment.API.Controllers;
 public class CandidateSubmissionController : ControllerBase
 {
     private readonly SubmissionService _submissionService;
-
+     
     public CandidateSubmissionController(SubmissionService submissionService)
     {
         _submissionService = submissionService;

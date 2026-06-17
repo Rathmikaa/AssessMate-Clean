@@ -9,7 +9,7 @@ namespace AIAssessment.Domain.Entities
     public class Option
     {
         public int Id { get; private set; }
-
+         
         public string OptionText { get; private set; }
         public bool IsCorrect { get; private set; }
 

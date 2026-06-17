@@ -10,7 +10,7 @@ namespace AIAssessment.Infrastructure.Persistence.Repositories
     public class UserTokenRepository : IUserTokenRepository
     {
         private readonly AppDbContext _db;
-
+         
         public UserTokenRepository(AppDbContext db) => _db = db;
 
         public async Task<UserToken> AddAsync(UserToken token)

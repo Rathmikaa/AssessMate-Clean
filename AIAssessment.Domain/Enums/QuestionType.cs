@@ -10,3 +10,4 @@ namespace AIAssessment.Domain.Enums
         Descriptive
     }
 }
+ 

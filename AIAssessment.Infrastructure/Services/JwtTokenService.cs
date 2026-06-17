@@ -9,7 +9,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 
 namespace AIAssessment.Infrastructure.Services
-{
+{ 
     public class JwtTokenService : ITokenService
     {
         private readonly IConfiguration _config;

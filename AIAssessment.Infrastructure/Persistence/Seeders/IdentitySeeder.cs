@@ -11,7 +11,7 @@ namespace AIAssessment.Infrastructure.Persistence.Seeders;
 
 // This is idempotent — safe to run every startup.
 // It checks before creating, so it never duplicates data.
-
+ 
 public static class IdentitySeeder
 {
     public static async Task SeedAsync(IServiceProvider services)

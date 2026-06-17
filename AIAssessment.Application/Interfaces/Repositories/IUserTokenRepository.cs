@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 namespace AIAssessment.Application.Interfaces.Repositories
 {
     public interface IUserTokenRepository
-    {
+    { 
         /// Save a newly issued token.
         Task<UserToken> AddAsync(UserToken token);
 

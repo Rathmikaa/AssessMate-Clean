@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Text;
 
 namespace AIAssessment.Application.Interfaces.Repositories
-{
+{ 
     public interface IAssessmentRepository
     {
         // Gets a Single Assessment by ID 

@@ -9,7 +9,7 @@ public class AppDbContext : IdentityDbContext<IdentityUser<int>, IdentityRole<in
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
-    // Domain tables
+    // Domain tables 
     public DbSet<Assessment> Assessments => Set<Assessment>();
     public DbSet<Question> Questions => Set<Question>();
     public DbSet<Option> Options => Set<Option>();

@@ -10,7 +10,7 @@ public class QuestionConfiguration : IEntityTypeConfiguration<Question>
     {
         builder.ToTable("Questions");
         builder.HasKey(q => q.Id);
-
+         
         builder.Property(q => q.QuestionText).IsRequired().HasMaxLength(2000);
         builder.Property(q => q.MaxMarks).IsRequired();
         builder.Property(q => q.ModelAnswer).HasMaxLength(4000);

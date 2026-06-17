@@ -8,4 +8,4 @@ namespace AIAssessment.Application.DTOs.Auth
         [Required]
         public string RefreshToken { get; set; } = null!;
     }
-}
+} 

@@ -88,7 +88,7 @@ public class AdminAssessmentController : ControllerBase
         var result = await _assessmentService.ToggleActiveAsync(id);
 
         if (!result.IsSuccess)
-            return NotFound(new { error = result.Error });
+             return NotFound(new { error = result.Error });
 
         return NoContent();
     }

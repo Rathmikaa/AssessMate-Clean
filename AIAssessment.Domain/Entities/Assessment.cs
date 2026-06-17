@@ -7,7 +7,7 @@ using AIAssessment.Domain.Exceptions;
 namespace AIAssessment.Domain.Entities
 {
     public class Assessment
-    {
+    { 
         public int Id { get; private set; }
         public string Title { get; private set; }
         public string? Description { get; private set; }

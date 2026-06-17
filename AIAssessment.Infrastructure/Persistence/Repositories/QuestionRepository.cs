@@ -12,7 +12,7 @@ public class QuestionRepository : IQuestionRepository
     public QuestionRepository(AppDbContext context)
     {
         _context = context;
-    }
+    } 
 
     public async Task<Question?> GetByIdAsync(int id)
         => await _context.Questions

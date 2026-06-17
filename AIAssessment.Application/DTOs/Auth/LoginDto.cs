@@ -15,3 +15,4 @@ namespace AIAssessment.Application.DTOs.Auth
         public string Password { get; set; } = null!;
     }
 }
+

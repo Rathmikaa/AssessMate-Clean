@@ -14,7 +14,7 @@ namespace AIAssessment.Domain.Entities
     /// ONE TOKEN PER USER:
     ///   On every login we call RevokeAllForUserAsync first, then insert one new row.
     ///   The unique index on UserId in the DB enforces this at database level too.
-  
+    
     public class UserToken
     {
         public int Id { get; private set; }

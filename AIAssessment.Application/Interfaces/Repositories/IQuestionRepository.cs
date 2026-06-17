@@ -4,9 +4,9 @@ using System.Collections.Generic;
 using System.Text;
 
 namespace AIAssessment.Application.Interfaces.Repositories
-{
+{ 
     public interface IQuestionRepository
-    {
+    { 
         Task<Question?> GetByIdAsync(int id);
         Task<Question> GetByIdWithOptionsAsync(int id);
         Task<IEnumerable<Question>> GetByAssessmentIdAsync(int assessmentId);

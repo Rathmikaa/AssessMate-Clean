@@ -15,6 +15,6 @@ namespace AIAssessment.Application.DTOs.Submission
 
         public List<AnswerDetailDto> Answers { get; set; } = new();
 
-    }
+    } 
    
 }

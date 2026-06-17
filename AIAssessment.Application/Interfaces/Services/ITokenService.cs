@@ -13,7 +13,7 @@ namespace AIAssessment.Application.Interfaces.Services
         Task<(string Token, string JwtId, DateTime ExpiresAt)> GenerateTokenAsync(
             int userId, string email, string role);
 
-        //Reads the jti claim from a raw token string.
+        //Reads the  jti claim from a raw token string.
         string? GetJwtIdFromToken(string token);
     }
 }

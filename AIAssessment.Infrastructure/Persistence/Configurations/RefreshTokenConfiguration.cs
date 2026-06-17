@@ -10,7 +10,7 @@ namespace AIAssessment.Infrastructure.Persistence.Configurations
         {
             builder.ToTable("RefreshTokens");
             builder.HasKey(t => t.Id);
-
+             
             // Base64(64 bytes) = 88 chars — 200 gives plenty of room
             builder.Property(t => t.Token).IsRequired().HasMaxLength(200);
             builder.Property(t => t.CreatedAt).IsRequired();

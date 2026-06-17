@@ -30,7 +30,7 @@ namespace AIAssessment.Infrastructure.Services;
 public class KeywordScoringService : IScoringService
 {
     // Words to ignore when matching — they appear everywhere and add no signal
-    private static readonly HashSet<string> StopWords = new(StringComparer.OrdinalIgnoreCase)
+    private static readonly HashSet<string> StopWords = new(StringComparer.OrdinalIgnoreCase) 
     {
         "a", "an", "the", "is", "are", "was", "were", "be", "been",
         "being", "have", "has", "had", "do", "does", "did", "will",

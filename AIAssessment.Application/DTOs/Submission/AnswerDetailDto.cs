@@ -14,5 +14,5 @@ namespace AIAssessment.Application.DTOs.Submission
         public string? UserAnswer { get; set; }
         public string? CorrectAnswer { get; set; }
         public int Score { get; set; }
-    }
+    } 
 }

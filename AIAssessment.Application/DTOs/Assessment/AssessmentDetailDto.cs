@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 
 namespace AIAssessment.Application.DTOs.Assessment
-{
+{ 
     public class AssessmentDetailDto
     {
         public int Id { get; set; }

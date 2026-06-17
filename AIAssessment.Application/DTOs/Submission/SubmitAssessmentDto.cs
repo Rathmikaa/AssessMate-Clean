@@ -15,3 +15,4 @@ namespace AIAssessment.Application.DTOs.Submission
         public List<AnswerDto> Answers { get; set; } = new();
     }
 }
+ 

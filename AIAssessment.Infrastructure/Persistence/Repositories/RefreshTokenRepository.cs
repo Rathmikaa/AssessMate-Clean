@@ -10,7 +10,7 @@ namespace AIAssessment.Infrastructure.Persistence.Repositories
     public class RefreshTokenRepository : IRefreshTokenRepository
     {
         private readonly AppDbContext _db;
-
+         
         public RefreshTokenRepository(AppDbContext db) => _db = db;
 
         public async Task<RefreshToken> AddAsync(RefreshToken token)

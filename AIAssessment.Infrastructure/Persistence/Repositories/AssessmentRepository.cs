@@ -10,7 +10,7 @@ namespace AIAssessment.Infrastructure.Persistence.Repositories;
 // This class is the ONLY place in the codebase that writes raw EF Core
 // queries for assessments. If you ever switch from SQL Server to PostgreSQL,
 // you change this file — nothing in Application or Domain needs to change.
-
+ 
 public class AssessmentRepository : IAssessmentRepository
 {
     private readonly AppDbContext _context;

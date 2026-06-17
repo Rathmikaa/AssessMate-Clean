@@ -9,7 +9,7 @@ public class AnswerConfiguration : IEntityTypeConfiguration<Answer>
     public void Configure(EntityTypeBuilder<Answer> builder)
     {
         builder.HasKey(a => a.Id);
-
+         
         // Nullable — MCQ answers won't have text, Descriptive won't have OptionId
         builder.Property(a => a.SelectedOptionId);
         builder.Property(a => a.AnswerText).HasMaxLength(4000);

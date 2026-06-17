@@ -7,7 +7,7 @@ namespace AIAssessment.Application.DTOs.Question
 {
     public class CreateQuestionDto
     {
-        [Required]
+        [Required] 
         public string QuestionText { get; set; } = null!;
 
         [Required]

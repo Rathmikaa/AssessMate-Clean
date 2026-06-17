@@ -5,7 +5,7 @@ using System.Text;
 namespace AIAssessment.Application.DTOs.Submission
 {
     public class SubmissionSummaryDto
-    {
+    { 
         public int SubmissionId { get; set; }
         public string AssessmentTitle { get; set; } = null!;
         public int TotalScore { get; set; }

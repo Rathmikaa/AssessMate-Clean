@@ -10,7 +10,7 @@ namespace AIAssessment.Infrastructure.Persistence.Repositories
     public class SubmissionRepository : ISubmissionRepository
     {
         private readonly AppDbContext _context;
-
+         
         public SubmissionRepository(AppDbContext context) => _context = context;
 
         public async Task<Submission?> GetByIdAsync(int id)

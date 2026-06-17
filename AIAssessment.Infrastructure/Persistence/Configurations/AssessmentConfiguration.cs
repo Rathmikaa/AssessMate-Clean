@@ -10,7 +10,7 @@ public class AssessmentConfiguration : IEntityTypeConfiguration<Assessment>
     {
         builder.ToTable("Assessments");
         builder.HasKey(a => a.Id);
-
+         
         builder.Property(a => a.Title).IsRequired().HasMaxLength(200);
         builder.Property(a => a.Description).HasMaxLength(1000);
         builder.Property(a => a.DurationMinutes).IsRequired();

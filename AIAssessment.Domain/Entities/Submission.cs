@@ -8,7 +8,7 @@ namespace AIAssessment.Domain.Entities
 {
     public class Submission
     {
-        public int Id { get; private set; }
+        public int Id  { get; private set; }
         public int UserId { get; private set; }
         public int AssessmentId { get; private set; }
         public SubmissionStatus Status { get; private set; }

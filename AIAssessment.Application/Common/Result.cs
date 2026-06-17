@@ -23,6 +23,8 @@ namespace AIAssessment.Application.Common
             => new(false, default, error);
     }
 
+    //Result without value, just success or failure with error message 
+
     //Non-Generic Version 
     public class Result
     {

@@ -10,7 +10,7 @@ namespace AIAssessment.API.Controllers;
 public class CandidateAssessmentController : ControllerBase
 {
     private readonly AssessmentService _assessmentService;
-
+     
     public CandidateAssessmentController(AssessmentService assessmentService)
     {
         _assessmentService = assessmentService;

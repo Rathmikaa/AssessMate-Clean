@@ -7,7 +7,7 @@ namespace AIAssessment.Domain.Entities
    
     public class User
     {
-        public int Id { get; private set; }
+        public int Id  { get; private set; }
         public string FullName { get; private set; }
         public String Email { get; private set; }
 

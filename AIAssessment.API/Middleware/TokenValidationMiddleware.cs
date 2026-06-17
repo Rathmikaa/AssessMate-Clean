@@ -27,7 +27,7 @@ namespace AIAssessment.API.Middleware
     public class TokenValidationMiddleware
     {
         private readonly RequestDelegate _next;
-
+         
         public TokenValidationMiddleware(RequestDelegate next) => _next = next;
 
         public async Task InvokeAsync(HttpContext context, IUserTokenRepository tokenRepo)

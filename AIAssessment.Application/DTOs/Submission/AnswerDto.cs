@@ -7,7 +7,7 @@ namespace AIAssessment.Application.DTOs.Submission
 {
     public class AnswerDto
     {
-        [Required]
+        [Required] 
         public int QuestionId { get; set; }
 
         // For MCQ questions

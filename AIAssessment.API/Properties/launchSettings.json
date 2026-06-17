@@ -1,4 +1,4 @@
-﻿{
+﻿ {
   "$schema": "https://json.schemastore.org/launchsettings.json",
   "profiles": {
     "http": {
@@ -10,7 +10,7 @@
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
-    },
+    }, 
     "https": {
       "commandName": "Project",
       "dotnetRunMessages": true,

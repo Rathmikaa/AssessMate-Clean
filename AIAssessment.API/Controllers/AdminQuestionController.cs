@@ -11,7 +11,7 @@ namespace AIAssessment.API.Controllers;
 public class AdminQuestionController : ControllerBase
 {
     private readonly QuestionService _questionService;
-
+     
     public AdminQuestionController(QuestionService questionService)
     {
         _questionService = questionService;

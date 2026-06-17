@@ -12,7 +12,7 @@ namespace AIAssessment.Application.Services
 {
     public class AuthService
     {
-        private readonly UserManager<IdentityUser<int>> _userManager;
+        private readonly  UserManager<IdentityUser<int>> _userManager;
         private readonly SignInManager<IdentityUser<int>> _signInManager;
         private readonly ITokenService _tokenService;
         private readonly IUserTokenRepository _tokenRepo;

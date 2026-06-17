@@ -7,7 +7,7 @@ namespace AIAssessment.Infrastructure.Persistence.Configurations
     public class UserTokenConfiguration : IEntityTypeConfiguration<UserToken>
     {
         public void Configure(EntityTypeBuilder<UserToken> builder)
-        {
+        { 
             builder.ToTable("UserTokens");
             builder.HasKey(t => t.Id);
 

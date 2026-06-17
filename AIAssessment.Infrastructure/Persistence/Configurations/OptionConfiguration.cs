@@ -9,7 +9,7 @@ public class OptionConfiguration : IEntityTypeConfiguration<Option>
     public void Configure(EntityTypeBuilder<Option> builder)
     {
         builder.HasKey(o => o.Id);
-
+         
         builder.Property(o => o.OptionText)
             .IsRequired()
             .HasMaxLength(500);

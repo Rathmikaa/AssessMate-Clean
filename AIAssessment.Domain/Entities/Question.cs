@@ -11,7 +11,7 @@ namespace AIAssessment.Domain.Entities
     {
         public int Id { get; private set; }
         public string QuestionText { get; private set; }
-        
+         
         public QuestionType QuestionType { get; private set; }
         public int MaxMarks { get; private set; }
 

@@ -14,7 +14,7 @@ namespace AIAssessment.Application.Services
 {
     public class SubmissionService
     {
-        private readonly ISubmissionRepository _submissionRepo;
+        private readonly  ISubmissionRepository _submissionRepo;
         private readonly IAssessmentRepository _assessmentRepo;
         private readonly IQuestionRepository _questionRepo;
         private readonly IScoringService _scoringService;

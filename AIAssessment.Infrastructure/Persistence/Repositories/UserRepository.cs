@@ -11,7 +11,7 @@ namespace AIAssessment.Infrastructure.Persistence.Repositories;
 /// This repository reads from Identity's DbSet and maps to a lightweight domain User
 /// object for use in the Application layer (e.g. populating SubmissionSummaryDto).
 
-public class UserRepository : IUserRepository
+public class UserRepository :  IUserRepository
 {
     private readonly UserManager<IdentityUser<int>> _userManager;
 

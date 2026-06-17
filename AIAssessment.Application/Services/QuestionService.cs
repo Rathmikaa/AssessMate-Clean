@@ -13,7 +13,7 @@ namespace AIAssessment.Application.Services
     // usecase : Admin -> create , update , delete ,activate/deactivete ,get all,get by id
     public class QuestionService
     {
-        private readonly IQuestionRepository _questionRepo;
+        private readonly  IQuestionRepository _questionRepo;
         private readonly IAssessmentRepository _assessmentRepo;
 
         public QuestionService(IQuestionRepository questionRepo, IAssessmentRepository assessmentRepo)

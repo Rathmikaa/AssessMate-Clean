@@ -7,7 +7,7 @@ using AIAssessment.Domain.Exceptions;
 namespace AIAssessment.Domain.Entities
 {
     public class Answer
-    {
+    { 
         public int Id { get; private set; }
         public int QuestionId { get; private set; }
         public int SubmissionId { get; private set; }

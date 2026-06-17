@@ -17,7 +17,7 @@ namespace AIAssessment.Domain.Entities
     ///   - Single use — each refresh rotates to a new token
     ///   - One per user — new login revokes any existing refresh token
     ///   - Expires after 7 days
-   
+    
     public class RefreshToken
     {
         public int Id { get; private set; }

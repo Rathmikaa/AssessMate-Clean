@@ -14,7 +14,7 @@ public class AdminResultController : ControllerBase
 {
     private readonly SubmissionService _submissionService;
     private readonly UserManager<IdentityUser<int>> _userManager;
-
+     
     public AdminResultController(
         SubmissionService submissionService,
         UserManager<IdentityUser<int>> userManager)

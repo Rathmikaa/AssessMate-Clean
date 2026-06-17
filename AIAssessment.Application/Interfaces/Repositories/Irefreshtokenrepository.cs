@@ -5,7 +5,7 @@ namespace AIAssessment.Application.Interfaces.Repositories
 {
     public interface IRefreshTokenRepository
     {
-        //Save a newly issued refresh token.
+        //Save a newly is sued refresh token.
         Task<RefreshToken> AddAsync(RefreshToken token);
       
         /// Find a refresh token by its value.

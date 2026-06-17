@@ -15,7 +15,7 @@ namespace AIAssessment.API.Controllers
         {
             _authService = authService;
         }
-
+         
         [HttpPost("register")]
         public async Task<IActionResult> Register(RegisterDto dto)
         {
