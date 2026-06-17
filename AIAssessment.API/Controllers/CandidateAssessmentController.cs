@@ -2,40 +2,23 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace AIAssessment.API.Controllers;
-
-[ApiController]
-[Route("api/candidate/assessments")]
-[Authorize(Roles = "Candidate")]
-public class CandidateAssessmentController : ControllerBase
+namespace AIAssessment.API.Controllers
 {
-    private readonly AssessmentService _assessmentService;
-     
-    public CandidateAssessmentController(AssessmentService assessmentService)
+    [Route("api/candidate/assessments")]
+    [Authorize(Roles = "Candidate")]
+    public class CandidateAssessmentController : BaseController
     {
-        _assessmentService = assessmentService;
-    }
+        private readonly AssessmentService _assessmentService;
 
-    // Browse all active assessments available to take.
-    [HttpGet]
-    public async Task<IActionResult> GetAll()
-    {
-        var list = await _assessmentService.GetAllActiveAsync();
-        return Ok(list);
-    }
+        public CandidateAssessmentController(AssessmentService assessmentService)
+            => _assessmentService = assessmentService;
 
-   
-    // Get one assessment with its questions — ready to take.
-    // Options are returned WITHOUT IsCorrect (that's hidden from candidates).
-  
-    [HttpGet("{id:int}")]
-    public async Task<IActionResult> GetForCandidate(int id)
-    {
-        var result = await _assessmentService.GetForCandidateAsync(id);
+        [HttpGet]
+        public async Task<IActionResult> GetAll()
+            => ToResponse(await _assessmentService.GetAllActiveAsync());
 
-        if (!result.IsSuccess)
-            return NotFound(new { error = result.Error });
-
-        return Ok(result.Value);
+        [HttpGet("{id:int}")]
+        public async Task<IActionResult> GetForCandidate(int id)
+            => ToResponse(await _assessmentService.GetForCandidateAsync(id));
     }
 }

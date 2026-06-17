@@ -3,65 +3,55 @@ using AIAssessment.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace AIAssessment.API.Controllers;
-
-[ApiController]
-[Route("api/admin/questions")]
-[Authorize(Roles = "Admin")]
-public class AdminQuestionController : ControllerBase
+namespace AIAssessment.API.Controllers
 {
-    private readonly QuestionService _questionService;
-     
-    public AdminQuestionController(QuestionService questionService)
+    [Route("api/admin/questions")]
+    [Authorize(Roles = "Admin")]
+    public class AdminQuestionController : BaseController
     {
-        _questionService = questionService;
-    }
+        private readonly QuestionService _questionService;
 
-    // Get all questions for an assessment (with options and correct answers).
-    [HttpGet("assessment/{assessmentId:int}")]
-    public async Task<IActionResult> GetByAssessment(int assessmentId)
-    {
-        var result = await _questionService.GetByAssessmentIdAsync(assessmentId);
+        public AdminQuestionController(QuestionService questionService)
+            => _questionService = questionService;
 
-        if (!result.IsSuccess)
-            return NotFound(new { error = result.Error });
+        /// <summary>
+        /// Admin can get questions by assessment ID to manage questions related to a specific assessment.
+        /// </summary>
+        /// <param name="assessmentId"></param>
+        /// <returns></returns>
 
-        return Ok(result.Value);
-    }
+        [HttpGet("assessment/{assessmentId:int}")]
+        public async Task<IActionResult> GetByAssessment(int assessmentId)
+            => ToResponse(await _questionService.GetByAssessmentIdAsync(assessmentId));
+        /// <summary>
+        /// Admin can create a new question for an assessment. 
+        /// </summary>
+        /// <param name="dto"></param>
+        /// <returns></returns>
 
-    // Add a question (MCQ or Descriptive) to an assessment.
-    [HttpPost]
-    public async Task<IActionResult> Create(CreateQuestionDto dto)
-    {
-        var result = await _questionService.CreateAsync(dto);
+        [HttpPost]
+        public async Task<IActionResult> Create(CreateQuestionDto dto)
+            => ToResponse(await _questionService.CreateAsync(dto));
 
-        if (!result.IsSuccess)
-            return BadRequest(new { error = result.Error });
+        /// <summary>
+        /// update an existing question. 
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="dto"></param>
+        /// <returns></returns>
 
-        return Ok(result.Value);
-    }
+        [HttpPut("{id:int}")]
+        public async Task<IActionResult> Update(int id, CreateQuestionDto dto)
+            => ToResponse(await _questionService.UpdateAsync(id, dto));
+        /// <summary>
+        /// Admin can delete a question by its ID.
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
 
-    // Update a question's text, marks, or options.
-    [HttpPut("{id:int}")]
-    public async Task<IActionResult> Update(int id, CreateQuestionDto dto)
-    {
-        var result = await _questionService.UpdateAsync(id, dto);
 
-        if (!result.IsSuccess)
-            return BadRequest(new { error = result.Error });
-
-        return Ok(result.Value);
-    }
-
-    // Delete a question permanently.
-    [HttpDelete("{id:int}")]
-    public async Task<IActionResult> Delete(int id)
-    {
-        var result = await _questionService.DeleteAsync(id);
-
-        if (!result.IsSuccess)
-            return NotFound(new { error = result.Error });
-
-        return Ok(" Question Deleted Successfully");
+        [HttpDelete("{id:int}")]
+        public async Task<IActionResult> Delete(int id)
+            => ToResponse(await _questionService.DeleteAsync(id));
     }
 }

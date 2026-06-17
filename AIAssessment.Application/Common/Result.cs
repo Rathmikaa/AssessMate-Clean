@@ -1,45 +1,60 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
 
 namespace AIAssessment.Application.Common
 {
-    //Generic Version
-    public  class Result<T>
-    {
-        public bool IsSuccess { get; }
-        public T? Value { get; }
-        public string? Error { get; }
-
-        private Result(bool isSuccess, T? value, string? error)
-        {
-            IsSuccess = isSuccess;
-            Value = value;
-            Error = error;
-        }
-        public static Result<T> Success(T value)
-            => new(true, value, null);
-        public static Result<T> Failure(string error)
-            => new(false, default, error);
-    }
-
-    //Result without value, just success or failure with error message 
-
-    //Non-Generic Version 
+    /// <summary>
+    /// Unified response wrapper used by all Application services.
+    ///
+    /// Instead of throwing exceptions for expected failures or returning
+    /// raw objects, every service method returns a Result.
+    /// The controller reads StatusCode and decides the HTTP response.
+    ///
+    /// USAGE IN A SERVICE:
+    ///   return new Result().GetResponse(dto, 200);
+    ///   return new Result().GetErrorResponse(404, ["Assessment not found."]);
+    ///
+    /// USAGE IN A CONTROLLER:
+    ///   var result = await _service.CreateAsync(dto);
+    ///   return StatusCode(result.StatusCode, result.IsSuccess ? result.Body : result.ErrorMessages);
+    /// </summary>
     public class Result
     {
-        public bool IsSuccess { get; }
-        public string? Error { get; }
+        private static readonly List<string> _emptyErrors = [];
 
-        private Result(bool isSuccess, string? error)
+        /// <summary>The response payload — your DTO or object.</summary>
+        public object? Body { get; set; }
+
+        /// <summary>Business error messages shown to the client.</summary>
+        public List<string> ErrorMessages { get; set; } = _emptyErrors;
+
+        /// <summary>Success or informational messages.</summary>
+        public List<string> Messages { get; set; } = [];
+
+        /// <summary>HTTP status code — 200, 201, 400, 404, 409 etc.</summary>
+        public int StatusCode { get; set; }
+
+        /// <summary>True when StatusCode is in the 2xx range.</summary>
+        public bool IsSuccess => StatusCode >= 200 && StatusCode < 300;
+
+        /// <summary>Build a success response with a body.</summary>
+        public Result GetResponse(object? body, int statusCode, List<string>? messages = null)
         {
-            IsSuccess = isSuccess;
-            Error = error;
+            return new Result
+            {
+                Body = body,
+                StatusCode = statusCode,
+                Messages = messages ?? []
+            };
         }
 
-        public static Result Success()
-            => new(true, null);
-        public static Result Failure(string error)
-            => new(false, error);
+        /// <summary>Build an error response.</summary>
+        public Result GetErrorResponse(int statusCode, List<string>? errorMessages = null)
+        {
+            return new Result
+            {
+                StatusCode = statusCode,
+                ErrorMessages = errorMessages ?? []
+            };
+        }
     }
 }

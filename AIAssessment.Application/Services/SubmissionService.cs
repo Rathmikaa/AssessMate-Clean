@@ -6,7 +6,6 @@ using AIAssessment.Domain.Entities;
 using AIAssessment.Domain.Enums;
 using AIAssessment.Domain.Exceptions;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -14,7 +13,7 @@ namespace AIAssessment.Application.Services
 {
     public class SubmissionService
     {
-        private readonly  ISubmissionRepository _submissionRepo;
+        private readonly ISubmissionRepository _submissionRepo;
         private readonly IAssessmentRepository _assessmentRepo;
         private readonly IQuestionRepository _questionRepo;
         private readonly IScoringService _scoringService;
@@ -31,29 +30,35 @@ namespace AIAssessment.Application.Services
             _scoringService = scoringService;
         }
 
-        //  Submit 
-        public async Task<Result<SubmissionResultDto>> SubmitAsync(int userId, SubmitAssessmentDto dto)
+        public async Task<Result> SubmitAsync(int userId, SubmitAssessmentDto dto)
         {
+            var r = new Result();
+
             var assessment = await _assessmentRepo.GetByIdWithQuestionsAsync(dto.AssessmentId);
             if (assessment == null)
-                return Result<SubmissionResultDto>.Failure(
-                    $"Assessment {dto.AssessmentId} not found.");
+                return r.GetErrorResponse(404,
+                    [$"Assessment with ID {dto.AssessmentId} was not found."]);
 
-            var alreadySubmitted = await _submissionRepo.HasUserSubmittedAsync(userId, dto.AssessmentId);
+            if (!assessment.IsActive)
+                return r.GetErrorResponse(400,
+                    [$"Assessment '{assessment.Title}' is no longer active and cannot be submitted."]);
+
+            var alreadySubmitted = await _submissionRepo.HasUserSubmittedAsync(
+                userId, dto.AssessmentId);
             if (alreadySubmitted)
-                return Result<SubmissionResultDto>.Failure(
-                    "You have already submitted this assessment.");
+                return r.GetErrorResponse(409,
+                    [$"You have already submitted '{assessment.Title}'. Multiple submissions are not allowed."]);
 
             try
             {
                 var submission = Submission.Create(userId, assessment);
                 var saved = await _submissionRepo.AddAsync(submission);
 
+                int answeredCount = 0;
                 foreach (var answerDto in dto.Answers)
                 {
                     var question = assessment.Questions
                         .FirstOrDefault(q => q.Id == answerDto.QuestionId);
-
                     if (question == null) continue;
 
                     Answer answer = question.QuestionType switch
@@ -62,21 +67,27 @@ namespace AIAssessment.Application.Services
                             saved.Id, question.Id, answerDto.SelectedOptionId ?? 0),
                         QuestionType.Descriptive => Answer.ForDescriptive(
                             saved.Id, question.Id, answerDto.AnswerText ?? string.Empty),
-                        _ => throw new DomainException($"Unknown question type: {question.QuestionType}")
+                        _ => throw new DomainException(
+                            $"Unknown question type: {question.QuestionType}")
                     };
 
                     int score = await _scoringService.ScoreAnswerAsync(question, answer);
                     answer.SetScore(score);
                     saved.AddAnswer(answer);
+                    answeredCount++;
                 }
 
                 saved.Submit();
                 saved.Evaluate();
                 await _submissionRepo.UpdateAsync(saved);
 
+                int totalQuestions = assessment.Questions.Count;
                 int maxPossible = assessment.Questions.Sum(q => q.MaxMarks);
+                int percentage = maxPossible > 0
+                    ? (int)Math.Round((double)saved.TotalScore / maxPossible * 100)
+                    : 0;
 
-                return Result<SubmissionResultDto>.Success(new SubmissionResultDto
+                return r.GetResponse(new SubmissionResultDto
                 {
                     SubmissionId = saved.Id,
                     AssessmentTitle = assessment.Title,
@@ -84,42 +95,58 @@ namespace AIAssessment.Application.Services
                     MaxPossibleScore = maxPossible,
                     Status = saved.Status.ToString(),
                     SubmittedAt = saved.SubmittedAt ?? DateTime.UtcNow
-                });
+                }, 200, [
+                    $"Assessment '{assessment.Title}' submitted successfully.",
+                    $"You answered {answeredCount} of {totalQuestions} question(s).",
+                    $"Your score: {saved.TotalScore} / {maxPossible} ({percentage}%)."
+                ]);
             }
-            catch (DomainException e)
+            catch (DomainException ex)
             {
-                return Result<SubmissionResultDto>.Failure(e.Message);
+                return r.GetErrorResponse(400, [ex.Message]);
             }
         }
 
-        //  Candidate: my results 
-        public async Task<IEnumerable<SubmissionSummaryDto>> GetMyResultsAsync(int userId)
+        public async Task<Result> GetMyResultsAsync(int userId)
         {
+            var r = new Result();
             var submissions = await _submissionRepo.GetByUserIdAsync(userId);
-            return submissions.Select(s => MapToSummary(s, includeCandidate: false));
+            var data = submissions.Select(s => MapToSummary(s, false)).ToList();
+
+            return data.Count == 0
+                ? r.GetResponse(data, 200, ["You have not submitted any assessments yet."])
+                : r.GetResponse(data, 200, [$"You have {data.Count} submission(s)."]);
         }
 
-        // Admin: all results
-        public async Task<IEnumerable<SubmissionSummaryDto>> GetAllResultsAsync()
+        public async Task<Result> GetAllResultsAsync()
         {
+            var r = new Result();
             var submissions = await _submissionRepo.GetAllAsync();
-            return submissions.Select(s => MapToSummary(s, includeCandidate: true));
+            var data = submissions.Select(s => MapToSummary(s, true)).ToList();
+
+            return data.Count == 0
+                ? r.GetResponse(data, 200, ["No submissions found."])
+                : r.GetResponse(data, 200, [$"{data.Count} total submission(s) found."]);
         }
 
-        // ── Detail view ───────────────────────────────────────────────────────
-        public async Task<Result<SubmissionDetailDto>> GetDetailAsync(
+        public async Task<Result> GetDetailAsync(
             int submissionId, int requestingUserId, bool isAdmin)
         {
+            var r = new Result();
+
             var submission = await _submissionRepo.GetByIdWithDetailsAsync(submissionId);
             if (submission == null)
-                return Result<SubmissionDetailDto>.Failure(
-                    $"Submission {submissionId} not found.");
+                return r.GetErrorResponse(404,
+                    [$"Submission with ID {submissionId} was not found."]);
 
             if (!isAdmin && submission.UserId != requestingUserId)
-                return Result<SubmissionDetailDto>.Failure(
-                    "You are not authorised to view this submission.");
+                return r.GetErrorResponse(403,
+                    ["You are not authorised to view this submission."]);
 
             int maxPossible = submission.Answers.Sum(a => a.Question.MaxMarks);
+            int percentage = maxPossible > 0
+                ? (int)Math.Round((double)submission.TotalScore / maxPossible * 100)
+                : 0;
 
             var detail = new SubmissionDetailDto
             {
@@ -145,10 +172,13 @@ namespace AIAssessment.Application.Services
                 }).ToList()
             };
 
-            return Result<SubmissionDetailDto>.Success(detail);
+            return r.GetResponse(detail, 200, [
+                $"Submission details for '{submission.Assessment.Title}'.",
+                $"Final score: {submission.TotalScore} / {maxPossible} ({percentage}%).",
+                $"Status: {submission.Status}."
+            ]);
         }
 
-        // ── Private helpers ───────────────────────────────────────────────────
         private static SubmissionSummaryDto MapToSummary(Submission s, bool includeCandidate) => new()
         {
             SubmissionId = s.Id,
@@ -157,8 +187,6 @@ namespace AIAssessment.Application.Services
             MaxPossibleScore = s.Assessment?.Questions.Sum(q => q.MaxMarks) ?? 0,
             Status = s.Status.ToString(),
             SubmittedAt = s.SubmittedAt ?? DateTime.UtcNow,
-            // User navigation is gone — show UserId as a string for admin view.
-            // To show email/name, you'd join with UserManager in the service.
             CandidateName = includeCandidate ? $"User #{s.UserId}" : null,
             CandidateEmail = includeCandidate ? $"userId:{s.UserId}" : null
         };

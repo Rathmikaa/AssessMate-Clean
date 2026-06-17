@@ -10,7 +10,7 @@ namespace AIAssessment.Infrastructure.Persistence.Repositories
     public class SubmissionRepository : ISubmissionRepository
     {
         private readonly AppDbContext _context;
-         
+
         public SubmissionRepository(AppDbContext context) => _context = context;
 
         public async Task<Submission?> GetByIdAsync(int id)
@@ -25,13 +25,13 @@ namespace AIAssessment.Infrastructure.Persistence.Repositories
                 .Include(s => s.Answers)
                     .ThenInclude(a => a.Question)
                         .ThenInclude(q => q.Options)
-                
                 .FirstOrDefaultAsync(s => s.Id == id);
 
         public async Task<IEnumerable<Submission>> GetByUserIdAsync(int userId)
             => await _context.Submissions
                 .Where(s => s.UserId == userId)
                 .Include(s => s.Assessment)
+                    .ThenInclude(a => a.Questions) //  needed for MaxPossibleScore
                 .OrderByDescending(s => s.SubmittedAt)
                 .ToListAsync();
 
@@ -39,13 +39,14 @@ namespace AIAssessment.Infrastructure.Persistence.Repositories
             => await _context.Submissions
                 .Where(s => s.AssessmentId == assessmentId)
                 .Include(s => s.Assessment)
+                    .ThenInclude(a => a.Questions)
                 .OrderByDescending(s => s.SubmittedAt)
                 .ToListAsync();
 
         public async Task<IEnumerable<Submission>> GetAllAsync()
             => await _context.Submissions
                 .Include(s => s.Assessment)
-                // No .Include(s => s.User) — resolved separately via Identity
+                    .ThenInclude(a => a.Questions) //  needed for MaxPossibleScore
                 .OrderByDescending(s => s.SubmittedAt)
                 .ToListAsync();
 

@@ -1,12 +1,15 @@
-using AIAssessment.API.Middleware;
+  using AIAssessment.API.Middleware;
 using AIAssessment.Infrastructure;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddInfrastructure(builder.Configuration);
+
+
 
 builder.Services.AddSwaggerGen(options =>
 {
@@ -41,6 +44,10 @@ builder.Services.AddSwaggerGen(options =>
             Array.Empty<string>()
         }
     });
+    var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    options.IncludeXmlComments(xmlPath);
+
 });
 
 builder.Services.AddCors(options =>

@@ -12,7 +12,7 @@ namespace AIAssessment.Application.Services
 {
     public class AuthService
     {
-        private readonly  UserManager<IdentityUser<int>> _userManager;
+        private readonly UserManager<IdentityUser<int>> _userManager;
         private readonly SignInManager<IdentityUser<int>> _signInManager;
         private readonly ITokenService _tokenService;
         private readonly IUserTokenRepository _tokenRepo;
@@ -29,13 +29,14 @@ namespace AIAssessment.Application.Services
             _tokenRepo = tokenRepo;
         }
 
-        // Register 
-        public async Task<Result<AuthResultDto>> RegisterAsync(RegisterDto dto)
+        public async Task<Result> RegisterAsync(RegisterDto dto)
         {
+            var r = new Result();
+
             var existing = await _userManager.FindByEmailAsync(dto.Email);
             if (existing != null)
-                return Result<AuthResultDto>.Failure(
-                    "An account with this email already exists.");
+                return r.GetErrorResponse(409,
+                    [$"An account with '{dto.Email}' already exists."]);
 
             var identityUser = new IdentityUser<int>
             {
@@ -46,21 +47,16 @@ namespace AIAssessment.Application.Services
 
             var createResult = await _userManager.CreateAsync(identityUser, dto.Password);
             if (!createResult.Succeeded)
-            {
-                var errors = string.Join("; ", createResult.Errors.Select(e => e.Description));
-                return Result<AuthResultDto>.Failure(errors);
-            }
+                return r.GetErrorResponse(400,
+                    createResult.Errors.Select(e => e.Description).ToList());
 
             await _userManager.AddToRoleAsync(identityUser, "Candidate");
 
-            // Pass identityUser.Id directly — this is the real DB-assigned ID
-            // NOT a domain User object (whose Id would always be 0)
             var (token, jwtId, expiresAt) = await _tokenService.GenerateTokenAsync(
                 identityUser.Id, identityUser.Email!, "Candidate");
-
             await SaveTokenAsync(identityUser.Id, token, jwtId, expiresAt);
 
-            return Result<AuthResultDto>.Success(new AuthResultDto
+            return r.GetResponse(new AuthResultDto
             {
                 UserId = identityUser.Id,
                 FullName = dto.FullName,
@@ -68,36 +64,34 @@ namespace AIAssessment.Application.Services
                 Role = "Candidate",
                 Token = token,
                 ExpiresAt = expiresAt
-            });
+            }, 201, [$"Account created successfully. Welcome, {dto.FullName}!"]);
         }
 
-        // Login
-        public async Task<Result<AuthResultDto>> LoginAsync(LoginDto dto)
+        public async Task<Result> LoginAsync(LoginDto dto)
         {
+            var r = new Result();
+
             var identityUser = await _userManager.FindByEmailAsync(dto.Email);
             if (identityUser == null)
-                return Result<AuthResultDto>.Failure("Invalid email or password.");
+                return r.GetErrorResponse(401, ["Invalid email or password."]);
 
             var signInResult = await _signInManager.CheckPasswordSignInAsync(
                 identityUser, dto.Password, lockoutOnFailure: false);
 
             if (!signInResult.Succeeded)
-                return Result<AuthResultDto>.Failure("Invalid email or password.");
+                return r.GetErrorResponse(401, ["Invalid email or password."]);
 
-            // ONE SESSION PER USER
             await _tokenRepo.RevokeAllForUserAsync(identityUser.Id);
 
             var roles = await _userManager.GetRolesAsync(identityUser);
             var role = roles.FirstOrDefault() ?? "Candidate";
             var fullName = identityUser.Email!.Split('@')[0];
 
-            // Pass real Identity ID — not a domain User
             var (token, jwtId, expiresAt) = await _tokenService.GenerateTokenAsync(
                 identityUser.Id, identityUser.Email!, role);
-
             await SaveTokenAsync(identityUser.Id, token, jwtId, expiresAt);
 
-            return Result<AuthResultDto>.Success(new AuthResultDto
+            return r.GetResponse(new AuthResultDto
             {
                 UserId = identityUser.Id,
                 FullName = fullName,
@@ -105,24 +99,25 @@ namespace AIAssessment.Application.Services
                 Role = role,
                 Token = token,
                 ExpiresAt = expiresAt
-            });
+            }, 200, [$"Welcome back, {fullName}! You are logged in as {role}."]);
         }
 
-        // Logout
         public async Task<Result> LogoutAsync(string rawToken)
         {
+            var r = new Result();
+
             var jwtId = _tokenService.GetJwtIdFromToken(rawToken);
             if (string.IsNullOrEmpty(jwtId))
-                return Result.Failure("Invalid token.");
+                return r.GetErrorResponse(400, ["Invalid token. Logout failed."]);
 
             var revoked = await _tokenRepo.RevokeAsync(jwtId);
             if (!revoked)
-                return Result.Failure("Token not found or already revoked.");
+                return r.GetErrorResponse(400,
+                    ["Token not found or already revoked. You may have already logged out."]);
 
-            return Result.Success();
+            return r.GetResponse(null, 200, ["You have been logged out successfully."]);
         }
 
-        //  Private helper
         private async Task SaveTokenAsync(
             int userId, string token, string jwtId, DateTime expiresAt)
         {

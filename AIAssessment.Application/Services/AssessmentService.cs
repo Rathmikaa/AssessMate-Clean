@@ -1,114 +1,139 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using AIAssessment.Application.Interfaces.Repositories;
+﻿using AIAssessment.Application.Common;
 using AIAssessment.Application.DTOs.Assessment;
+using AIAssessment.Application.Interfaces.Repositories;
 using AIAssessment.Domain.Entities;
-using AIAssessment.Application.Common;
 using AIAssessment.Domain.Exceptions;
-using AIAssessment.Domain.Enums;
- 
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace AIAssessment.Application.Services
 {
-    //usecase : Admin -> create , update , delete ,activate/deactivete ,get all,get by id
-    // candidate -> get all active ,get by id (questions without correct answers)
     public class AssessmentService
     {
         private readonly IAssessmentRepository _assessmentRepo;
 
         public AssessmentService(IAssessmentRepository assessmentRepo)
-        {
-            _assessmentRepo = assessmentRepo;
-        }
+            => _assessmentRepo = assessmentRepo;
 
-        //Admin use case
-        public async Task<Result<AssessmentSummaryDto>> CreateAsync(CreateAssessmentDto dto)
+        public async Task<Result> CreateAsync(CreateAssessmentDto dto)
         {
+            var r = new Result();
             try
             {
                 var assessment = Assessment.Create(dto.Title, dto.Description, dto.DurationMinutes);
                 var saved = await _assessmentRepo.AddAsync(assessment);
-
-                return Result<AssessmentSummaryDto>.Success(MapToSummary(saved));
+                return r.GetResponse(MapToSummary(saved), 201,
+                    [$"Assessment '{saved.Title}' created successfully."]);
             }
-            catch(DomainException ex)
+            catch (DomainException ex)
             {
-                return Result<AssessmentSummaryDto>.Failure(ex.Message);
+                return r.GetErrorResponse(400, [ex.Message]);
             }
         }
 
-
         public async Task<Result> UpdateAsync(int id, UpdateAssessmentDto dto)
         {
+            var r = new Result();
             var assessment = await _assessmentRepo.GetByIdAsync(id);
             if (assessment == null)
-                return Result.Failure("Assessment not found");
+                return r.GetErrorResponse(404,
+                    [$"Assessment with ID {id} was not found."]);
             try
             {
                 assessment.Update(dto.Title, dto.Description, dto.DurationMinutes);
                 await _assessmentRepo.UpdateAsync(assessment);
-                return Result.Success();
-
+                return r.GetResponse(null, 200,
+                    [$"Assessment '{assessment.Title}' updated successfully."]);
             }
             catch (DomainException ex)
             {
-                return Result.Failure(ex.Message);
+                return r.GetErrorResponse(400, [ex.Message]);
             }
         }
 
         public async Task<Result> DeleteAsync(int id)
         {
+            var r = new Result();
             var assessment = await _assessmentRepo.GetByIdAsync(id);
             if (assessment == null)
-                return Result.Failure($"Assessment {id} not found.");
+                return r.GetErrorResponse(404,
+                    [$"Assessment with ID {id} was not found."]);
 
             await _assessmentRepo.DeleteAsync(assessment);
-            return Result.Success();
+            return r.GetResponse(null, 200,
+                [$"Assessment '{assessment.Title}' deleted successfully."]);
         }
+
         public async Task<Result> ToggleActiveAsync(int id)
         {
+            var r = new Result();
             var assessment = await _assessmentRepo.GetByIdAsync(id);
             if (assessment == null)
-                return Result.Failure($"Assessment {id} not found.");
-            if (assessment.IsActive)
-                assessment.Deactivate();
-            else
-                assessment.Activate();
+                return r.GetErrorResponse(404,
+                    [$"Assessment with ID {id} was not found."]);
+
+            if (assessment.IsActive) assessment.Deactivate();
+            else assessment.Activate();
 
             await _assessmentRepo.UpdateAsync(assessment);
-            return Result.Success();
+
+            var status = assessment.IsActive ? "activated" : "deactivated";
+            return r.GetResponse(null, 200,
+                [$"Assessment '{assessment.Title}' has been {status}."]);
         }
 
-        public async Task<Result<AssessmentDetailDto>> GetByIdAsync(int id) 
+        public async Task<Result> GetAllAsync()
         {
+            var r = new Result();
+            var list = await _assessmentRepo.GetAllAsync();
+            var data = list.Select(MapToSummary).ToList();
+
+            return data.Count == 0
+                ? r.GetResponse(data, 200, ["No assessments found."])
+                : r.GetResponse(data, 200, [$"{data.Count} assessment(s) found."]);
+        }
+
+        public async Task<Result> GetByIdAsync(int id)
+        {
+            var r = new Result();
             var assessment = await _assessmentRepo.GetByIdWithQuestionsAsync(id);
             if (assessment == null)
-                return Result<AssessmentDetailDto>.Failure($"Assessment {id} not found.");
-            return Result<AssessmentDetailDto>.Success(MapToDetail(assessment, includeCorrectAnswers: true));
+                return r.GetErrorResponse(404,
+                    [$"Assessment with ID {id} was not found."]);
+
+            return r.GetResponse(MapToDetail(assessment, includeCorrectAnswers: true), 200,
+                [$"Assessment '{assessment.Title}' retrieved successfully."]);
         }
 
-        //Candidate use case
-        public async Task<IEnumerable<AssessmentSummaryDto>> GetAllActiveAsync()
+        public async Task<Result> GetAllActiveAsync()
         {
-            var assessments = await _assessmentRepo.GetAllActiveAsync();
-            return assessments.Select(MapToSummary);
+            var r = new Result();
+            var list = await _assessmentRepo.GetAllActiveAsync();
+            var data = list.Select(MapToSummary).ToList();
+
+            return data.Count == 0
+                ? r.GetResponse(data, 200, ["No active assessments available at this time."])
+                : r.GetResponse(data, 200, [$"{data.Count} active assessment(s) available."]);
         }
 
-        public async Task<Result<AssessmentDetailDto>> GetForCandidateAsync(int id)
+        public async Task<Result> GetForCandidateAsync(int id)
         {
+            var r = new Result();
             var assessment = await _assessmentRepo.GetByIdWithQuestionsAsync(id);
-            if(assessment == null)
-                return Result<AssessmentDetailDto>.Failure($"Assessment {id} not found.");
-            if(!assessment.IsActive)
-                return Result<AssessmentDetailDto>.Failure("This assessment is not currently available.");
-            return Result<AssessmentDetailDto>.Success(MapToDetail(assessment, includeCorrectAnswers: false));
+            if (assessment == null)
+                return r.GetErrorResponse(404,
+                    [$"Assessment with ID {id} was not found."]);
+            if (!assessment.IsActive)
+                return r.GetErrorResponse(400,
+                    [$"Assessment '{assessment.Title}' is not currently available."]);
+
+            return r.GetResponse(MapToDetail(assessment, includeCorrectAnswers: false), 200,
+                [$"Assessment '{assessment.Title}' loaded. You have {assessment.DurationMinutes} minutes."]);
         }
 
+        // ── Mapping helpers ───────────────────────────────────────────────────
 
-        //Mapping Helpers
-
-        private static AssessmentSummaryDto MapToSummary(Assessment a) => new AssessmentSummaryDto()
+        private static AssessmentSummaryDto MapToSummary(Assessment a) => new()
         {
             Id = a.Id,
             Title = a.Title,
@@ -118,30 +143,28 @@ namespace AIAssessment.Application.Services
             QuestionCount = a.Questions.Count
         };
 
-        private static AssessmentDetailDto MapToDetail(Assessment a , bool includeCorrectAnswers)  => new AssessmentDetailDto()
+        private static AssessmentDetailDto MapToDetail(Assessment a, bool includeCorrectAnswers) => new()
         {
             Id = a.Id,
             Title = a.Title,
             Description = a.Description,
             DurationMinutes = a.DurationMinutes,
-            IsActive =a.IsActive,
+            IsActive = a.IsActive,
             CreatedAt = a.CreatedAt,
-            Questions = a.Questions.Select(q => new QuestionInAssessmentDto()
+            Questions = a.Questions.Select(q => new QuestionInAssessmentDto
             {
-              Id = q.Id,
-              QuestionText = q.QuestionText,
-              QuestionType = q.QuestionType.ToString(),
-              MaxMarks = q.MaxMarks,
-              Options = q.QuestionType == Domain.Enums.QuestionType.MCQ?
-                q.Options.Select(o => new OptionDto()
-                {
-                    Id = o.Id,
-                    OptionText = o.OptionText,
-                    
-                }).ToList() : null
-        
+                Id = q.Id,
+                QuestionText = q.QuestionText,
+                QuestionType = q.QuestionType.ToString(),
+                MaxMarks = q.MaxMarks,
+                Options = q.QuestionType == Domain.Enums.QuestionType.MCQ
+                    ? q.Options.Select(o => new OptionDto
+                    {
+                        Id = o.Id,
+                        OptionText = o.OptionText
+                    }).ToList()
+                    : null
             }).ToList()
         };
-
-        }
+    }
 }
