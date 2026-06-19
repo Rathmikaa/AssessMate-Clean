@@ -53,9 +53,10 @@ builder.Services.AddSwaggerGen(options =>
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
-        policy.WithOrigins("http://localhost:3000", "http://localhost:5173")
+        policy.WithOrigins("http://localhost:3000", "http://localhost:5173", "http://localhost:4200")
               .AllowAnyMethod()
               .AllowAnyHeader());
+                
 });
 
 var app = builder.Build();
@@ -90,6 +91,7 @@ app.UseMiddleware<TokenValidationMiddleware>();
 
 // 4. Enforces [Authorize] and [Authorize(Roles="...")]
 app.UseAuthorization();
+
 
 app.MapControllers();
 app.Run(); 

@@ -14,7 +14,10 @@ namespace AIAssessment.API.Controllers
 
         public CandidateResultController(SubmissionService submissionService)
             => _submissionService = submissionService;
-
+        /// <summary>
+        /// gets the list of results for the currently logged-in candidate. Each result includes basic information about the submission and its status.
+        /// </summary>
+        /// <returns></returns>
         [HttpGet]
         public async Task<IActionResult> GetMyResults()
         {
@@ -27,6 +30,12 @@ namespace AIAssessment.API.Controllers
 
             return ToResponse(await _submissionService.GetMyResultsAsync(userId.Value));
         }
+
+        /// <summary>
+        /// get detailed information about a specific submission result, including the feedback and scores for each question. The endpoint ensures that candidates can only access their own results and not those of other candidates.
+        /// </summary>
+        /// <param name="submissionId"></param>
+        /// <returns></returns>
 
         [HttpGet("{submissionId:int}")]
         public async Task<IActionResult> GetDetail(int submissionId)

@@ -12,11 +12,20 @@ namespace AIAssessment.API.Controllers
 
         public CandidateAssessmentController(AssessmentService assessmentService)
             => _assessmentService = assessmentService;
+        /// <summary>
+        /// gets a list of all active assessments available to candidates, allowing them to view and select assessments they can take.
+        /// </summary>
+        /// <returns></returns>
 
         [HttpGet]
         public async Task<IActionResult> GetAll()
             => ToResponse(await _assessmentService.GetAllActiveAsync());
 
+        /// <summary>
+        /// get detailed information about a specific assessment by its ID.
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetForCandidate(int id)
             => ToResponse(await _assessmentService.GetForCandidateAsync(id));

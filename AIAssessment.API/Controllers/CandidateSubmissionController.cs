@@ -16,6 +16,11 @@ namespace AIAssessment.API.Controllers
         public CandidateSubmissionController(SubmissionService submissionService)
             => _submissionService = submissionService;
 
+        /// <summary>
+        /// submits an assessment for the currently logged-in candidate. The candidate's user ID is extracted from the JWT token and used to associate the submission with the correct user. The method returns a response indicating the success or failure of the submission process.
+        /// </summary>
+        /// <param name="dto"></param>
+        /// <returns></returns>
         [HttpPost]
         public async Task<IActionResult> Submit(SubmitAssessmentDto dto)
         {

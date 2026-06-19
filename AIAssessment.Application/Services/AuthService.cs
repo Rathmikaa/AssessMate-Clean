@@ -40,7 +40,7 @@ namespace AIAssessment.Application.Services
 
             var identityUser = new IdentityUser<int>
             {
-                UserName = dto.Email,
+                UserName = dto.FullName,
                 Email = dto.Email,
                 EmailConfirmed = true
             };

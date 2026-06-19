@@ -19,10 +19,7 @@ namespace AIAssessment.API.Middleware
     ///     - If missing → 401 (token was revoked / user logged out)
     ///     - If found   → continue
     ///
-    /// PLACEMENT IN PIPELINE (Program.cs):
-    ///   app.UseAuthentication();
-    ///   app.UseMiddleware<TokenValidationMiddleware>();  ← here
-    ///   app.UseAuthorization();
+   
     
     public class TokenValidationMiddleware
     {

@@ -20,12 +20,19 @@ namespace AIAssessment.API.Controllers
             _userManager = userManager;
         }
         /// <summary>
-        /// As
+        /// Gets all submission results for all assessments. 
         /// </summary>
         /// <returns></returns>
         [HttpGet]
         public async Task<IActionResult> GetAll()
             => ToResponse(await _submissionService.GetAllResultsAsync());
+
+        /// <summary>
+        /// Get specific submission result by submissionId.
+        /// </summary>
+        /// <param name="submissionId"></param>
+        /// <returns></returns>
+
 
         [HttpGet("{submissionId:int}")]
         public async Task<IActionResult> GetDetail(int submissionId)

@@ -20,6 +20,7 @@ namespace AIAssessment.Infrastructure.Persistence.Repositories
             return token;
         }
 
+
         public async Task<RefreshToken?> GetByTokenAsync(string token)
             => await _db.RefreshTokens
                 .FirstOrDefaultAsync(t => t.Token == token);

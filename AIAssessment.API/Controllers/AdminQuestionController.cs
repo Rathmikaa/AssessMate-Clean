@@ -7,6 +7,7 @@ namespace AIAssessment.API.Controllers
 {
     [Route("api/admin/questions")]
     [Authorize(Roles = "Admin")]
+
     public class AdminQuestionController : BaseController
     {
         private readonly QuestionService _questionService;
