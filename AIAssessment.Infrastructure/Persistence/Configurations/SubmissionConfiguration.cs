@@ -9,7 +9,7 @@ namespace AIAssessment.Infrastructure.Persistence.Configurations
         public void Configure(EntityTypeBuilder<Submission> builder)
         {
             builder.ToTable("Submissions");
-            builder.HasKey(s => s.Id); 
+            builder.HasKey(s => s.Id);
 
             builder.Property(s => s.TotalScore).IsRequired().HasDefaultValue(0);
             builder.Property(s => s.StartedAt).IsRequired();
@@ -26,8 +26,7 @@ namespace AIAssessment.Infrastructure.Persistence.Configurations
 
             builder.Property(s => s.UserId).IsRequired();
 
- 
-            builder.HasIndex(s => s.UserId);
+            builder.HasIndex(s => new { s.UserId, s.AssessmentId }).IsUnique();
 
             builder.HasMany(s => s.Answers)
                 .WithOne(a => a.Submission)

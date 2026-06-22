@@ -1,14 +1,41 @@
-  using AIAssessment.API.Middleware;
+using AIAssessment.API.Hubs;
+using AIAssessment.API.Middleware;
+using AIAssessment.Application.Interfaces.Services;
 using AIAssessment.Infrastructure;
+
+using DotNetEnv;
 using Microsoft.OpenApi.Models;
 
+
+var envFile = FindEnvFile(AppContext.BaseDirectory);
+if (envFile != null)
+{
+    Env.Load(envFile);
+}
+
 var builder = WebApplication.CreateBuilder(args);
+
+
+var envOverrides = new Dictionary<string, string?>
+{
+    ["Email:Host"] = Environment.GetEnvironmentVariable("Email__Host"),
+    ["Email:Port"] = Environment.GetEnvironmentVariable("Email__Port"),
+    ["Email:EnableSsl"] = Environment.GetEnvironmentVariable("Email__EnableSsl"),
+    ["Email:Username"] = Environment.GetEnvironmentVariable("Email__Username"),
+    ["Email:Password"] = Environment.GetEnvironmentVariable("Email__Password"),
+    ["Jwt:Key"] = Environment.GetEnvironmentVariable("Jwt__Key"),
+};
+
+builder.Configuration.AddInMemoryCollection(
+    envOverrides.Where(kvp => !string.IsNullOrEmpty(kvp.Value)).ToList());
+
 
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddInfrastructure(builder.Configuration);
-
+builder.Services.AddSignalR();
+builder.Services.AddScoped<IAssessmentMonitorNotifier, SignalRAssessmentMonitorNotifier>();
 
 
 builder.Services.AddSwaggerGen(options =>
@@ -55,7 +82,8 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend", policy =>
         policy.WithOrigins("http://localhost:3000", "http://localhost:5173", "http://localhost:4200")
               .AllowAnyMethod()
-              .AllowAnyHeader());
+              .AllowAnyHeader()
+              .AllowCredentials());
                 
 });
 
@@ -94,4 +122,19 @@ app.UseAuthorization();
 
 
 app.MapControllers();
-app.Run(); 
+app.MapHub<AssessmentMonitorHub>("/hubs/assessment-monitor");
+app.Run();
+
+
+static string? FindEnvFile(string start, string fileName = ".env")
+{
+    var dir = new DirectoryInfo(start);
+    while (dir != null)
+    {
+        var candidate = Path.Combine(dir.FullName, fileName);
+        if (File.Exists(candidate))
+            return candidate;
+        dir = dir.Parent;
+    }
+    return null;
+}

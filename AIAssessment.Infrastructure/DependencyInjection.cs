@@ -1,9 +1,9 @@
-﻿using AIAssessment.Infrastructure.Persistence.Repositories;
-using AIAssessment.Application.Interfaces.Repositories;
+﻿using AIAssessment.Application.Interfaces.Repositories;
 using AIAssessment.Application.Interfaces.Services;
 using AIAssessment.Application.Services;
+using AIAssessment.Infrastructure.Identity;
 using AIAssessment.Infrastructure.Persistence;
-
+using AIAssessment.Infrastructure.Persistence.Repositories;
 using AIAssessment.Infrastructure.Persistence.Seeders;
 using AIAssessment.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -29,7 +29,10 @@ public static class DependencyInjection
                 configuration.GetConnectionString("DefaultConnection"),
                 b => b.MigrationsAssembly("AIAssessment.Infrastructure")));
 
-        // 2. Identity — uses IdentityUser<int> (not our domain User)
+        // Must be registered BEFORE AddIdentityCore — AddIdentityCore only TryAdds the
+        // default IUserValidator, so whichever implementation lands first wins.
+        services.AddScoped<IUserValidator<IdentityUser<int>>, EmailOnlyUserValidator>();
+        
         services
             .AddIdentityCore<IdentityUser<int>>(options =>
             {
@@ -39,6 +42,11 @@ public static class DependencyInjection
                 options.Password.RequireUppercase = true;
                 options.Password.RequireNonAlphanumeric = true;
                 options.Password.RequiredLength = 8;
+
+                // Brute-force protection — paired with AuthService's lockoutOnFailure: true (Phase 2)
+                options.Lockout.MaxFailedAccessAttempts = 5;
+                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+                options.Lockout.AllowedForNewUsers = true;
             })
             .AddRoles<IdentityRole<int>>()
             .AddEntityFrameworkStores<AppDbContext>()
@@ -85,10 +93,12 @@ public static class DependencyInjection
         // 5. Services
         services.AddScoped<ITokenService, JwtTokenService>();
         services.AddScoped<IScoringService, KeywordScoringService>();
+        services.AddScoped<IEmailService, EmailService>();
         services.AddScoped<AuthService>();
         services.AddScoped<AssessmentService>();
         services.AddScoped<SubmissionService>();
         services.AddScoped<QuestionService>();
+        services.AddScoped<CandidateService>();
 
         return services;
     }

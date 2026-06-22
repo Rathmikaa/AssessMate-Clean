@@ -1,8 +1,10 @@
 ﻿using AIAssessment.Application.Common;
 using AIAssessment.Application.DTOs.Assessment;
 using AIAssessment.Application.Interfaces.Repositories;
+using AIAssessment.Application.Interfaces.Services;
 using AIAssessment.Domain.Entities;
 using AIAssessment.Domain.Exceptions;
+using Microsoft.AspNetCore.Identity;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -11,9 +13,18 @@ namespace AIAssessment.Application.Services
     public class AssessmentService
     {
         private readonly IAssessmentRepository _assessmentRepo;
+        private readonly UserManager<IdentityUser<int>> _userManager;
+        private readonly IAssessmentMonitorNotifier _notifier;
 
-        public AssessmentService(IAssessmentRepository assessmentRepo)
-            => _assessmentRepo = assessmentRepo;
+        public AssessmentService(
+            IAssessmentRepository assessmentRepo,
+            UserManager<IdentityUser<int>> userManager,
+            IAssessmentMonitorNotifier notifier)
+        {
+            _assessmentRepo = assessmentRepo;
+            _userManager = userManager;
+            _notifier = notifier;
+        }
 
         public async Task<Result> CreateAsync(CreateAssessmentDto dto)
         {
@@ -116,7 +127,9 @@ namespace AIAssessment.Application.Services
                 : r.GetResponse(data, 200, [$"{data.Count} active assessment(s) available."]);
         }
 
-        public async Task<Result> GetForCandidateAsync(int id)
+        // CHANGED: now takes userId so we know WHO is starting the assessment,
+        // and fires a live "CandidateStarted" signal to any connected admin dashboards.
+        public async Task<Result> GetForCandidateAsync(int id, int userId)
         {
             var r = new Result();
             var assessment = await _assessmentRepo.GetByIdWithQuestionsAsync(id);
@@ -127,11 +140,15 @@ namespace AIAssessment.Application.Services
                 return r.GetErrorResponse(400,
                     [$"Assessment '{assessment.Title}' is not currently available."]);
 
+            var candidate = await _userManager.FindByIdAsync(userId.ToString());
+            if (candidate != null)
+                await _notifier.CandidateStartedAsync(assessment.Id, assessment.Title, userId, candidate.UserName ?? "Unknown");
+
             return r.GetResponse(MapToDetail(assessment, includeCorrectAnswers: false), 200,
                 [$"Assessment '{assessment.Title}' loaded. You have {assessment.DurationMinutes} minutes."]);
         }
 
-        // ── Mapping helpers ───────────────────────────────────────────────────
+        // Mapping helpers 
 
         private static AssessmentSummaryDto MapToSummary(Assessment a) => new()
         {

@@ -1,6 +1,8 @@
-﻿using AIAssessment.Application.Services;
+﻿using AIAssessment.Application.Common;
+using AIAssessment.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace AIAssessment.API.Controllers
 {
@@ -12,22 +14,28 @@ namespace AIAssessment.API.Controllers
 
         public CandidateAssessmentController(AssessmentService assessmentService)
             => _assessmentService = assessmentService;
-        /// <summary>
-        /// gets a list of all active assessments available to candidates, allowing them to view and select assessments they can take.
-        /// </summary>
-        /// <returns></returns>
 
         [HttpGet]
         public async Task<IActionResult> GetAll()
             => ToResponse(await _assessmentService.GetAllActiveAsync());
 
-        /// <summary>
-        /// get detailed information about a specific assessment by its ID.
-        /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetForCandidate(int id)
-            => ToResponse(await _assessmentService.GetForCandidateAsync(id));
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null)
+            {
+                var r = new Result();
+                return ToResponse(r.GetErrorResponse(401, ["Could not identify the logged-in user."]));
+            }
+
+            return ToResponse(await _assessmentService.GetForCandidateAsync(id, userId.Value));
+        }
+
+        private int? GetCurrentUserId()
+        {
+            var claim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            return int.TryParse(claim, out var id) ? id : null;
+        }
     }
 }

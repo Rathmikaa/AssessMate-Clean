@@ -1,6 +1,8 @@
 ﻿using AIAssessment.Application.Interfaces.Repositories;
 using AIAssessment.Domain.Entities;
+using AIAssessment.Domain.Exceptions;
 using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -55,11 +57,31 @@ namespace AIAssessment.Infrastructure.Persistence.Repositories
                 .AnyAsync(s => s.UserId == userId
                             && s.AssessmentId == assessmentId);
 
+        // used by CandidateService's admin candidate list/monitor view.
+        public async Task<int> CountByUserIdAsync(int userId)
+            => await _context.Submissions.CountAsync(s => s.UserId == userId);
+
         public async Task<Submission> AddAsync(Submission submission)
         {
-            _context.Submissions.Add(submission);
-            await _context.SaveChangesAsync();
-            return submission;
+            try
+            {
+                _context.Submissions.Add(submission);
+                await _context.SaveChangesAsync();
+                return submission;
+            }
+            catch (DbUpdateException ex) when (IsDuplicateSubmission(ex))
+            {
+                // Defense-in-depth: SubmissionService already checks
+                // HasUserSubmittedAsync before calling this, but two near-simultaneous
+                // requests from the same candidate can both pass that check before
+                // either insert commits. The unique index on (UserId, AssessmentId)
+                // in SubmissionConfiguration is what actually stops the second insert;
+                // this just turns the raw SQL exception into a clean, expected message
+                // that SubmissionService's existing `catch (DomainException ex)` block
+                // already knows how to turn into a 400 response.
+                throw new DomainException(
+                    "You have already submitted this assessment. Multiple submissions are not allowed.");
+            }
         }
 
         public async Task UpdateAsync(Submission submission)
@@ -67,5 +89,9 @@ namespace AIAssessment.Infrastructure.Persistence.Repositories
             _context.Submissions.Update(submission);
             await _context.SaveChangesAsync();
         }
+
+        private static bool IsDuplicateSubmission(DbUpdateException ex)
+            => ex.InnerException?.Message.Contains(
+                "IX_Submissions_UserId_AssessmentId", StringComparison.OrdinalIgnoreCase) == true;
     }
 }

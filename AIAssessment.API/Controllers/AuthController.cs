@@ -1,7 +1,9 @@
-﻿using AIAssessment.Application.DTOs.Auth;
+﻿using AIAssessment.Application.Common;
+using AIAssessment.Application.DTOs.Auth;
 using AIAssessment.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace AIAssessment.API.Controllers
 {
@@ -42,12 +44,15 @@ namespace AIAssessment.API.Controllers
 
             if (string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith("Bearer "))
             {
-                var r = new Application.Common.Result();
+                var r = new Result();
                 return ToResponse(r.GetErrorResponse(400, ["No token provided."]));
             }
 
             var rawToken = authHeader["Bearer ".Length..].Trim();
-            return ToResponse(await _authService.LogoutAsync(rawToken));
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userId = int.TryParse(userIdClaim, out var id) ? id : 0;
+
+            return ToResponse(await _authService.LogoutAsync(rawToken, userId));
         }
     }
 }

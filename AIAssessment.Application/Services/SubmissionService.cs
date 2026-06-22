@@ -5,6 +5,7 @@ using AIAssessment.Application.Interfaces.Services;
 using AIAssessment.Domain.Entities;
 using AIAssessment.Domain.Enums;
 using AIAssessment.Domain.Exceptions;
+using Microsoft.AspNetCore.Identity;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -17,17 +18,23 @@ namespace AIAssessment.Application.Services
         private readonly IAssessmentRepository _assessmentRepo;
         private readonly IQuestionRepository _questionRepo;
         private readonly IScoringService _scoringService;
+        private readonly UserManager<IdentityUser<int>> _userManager;
+        private readonly IAssessmentMonitorNotifier _notifier;
 
         public SubmissionService(
             ISubmissionRepository submissionRepo,
             IAssessmentRepository assessmentRepo,
             IQuestionRepository questionRepo,
-            IScoringService scoringService)
+            IScoringService scoringService,
+            UserManager<IdentityUser<int>> userManager,
+            IAssessmentMonitorNotifier notifier)
         {
             _submissionRepo = submissionRepo;
             _assessmentRepo = assessmentRepo;
             _questionRepo = questionRepo;
             _scoringService = scoringService;
+            _userManager = userManager;
+            _notifier = notifier;
         }
 
         public async Task<Result> SubmitAsync(int userId, SubmitAssessmentDto dto)
@@ -87,6 +94,13 @@ namespace AIAssessment.Application.Services
                     ? (int)Math.Round((double)saved.TotalScore / maxPossible * 100)
                     : 0;
 
+                // NEW: live signal to any connected admin dashboards.
+                var candidate = await _userManager.FindByIdAsync(userId.ToString());
+                if (candidate != null)
+                    await _notifier.CandidateSubmittedAsync(
+                        assessment.Id, assessment.Title, userId, candidate.UserName ?? "Unknown",
+                        saved.TotalScore, maxPossible);
+
                 return r.GetResponse(new SubmissionResultDto
                 {
                     SubmissionId = saved.Id,
@@ -111,7 +125,8 @@ namespace AIAssessment.Application.Services
         {
             var r = new Result();
             var submissions = await _submissionRepo.GetByUserIdAsync(userId);
-            var data = submissions.Select(s => MapToSummary(s, false)).ToList();
+            // Own results — no need to look up the candidate's own name.
+            var data = submissions.Select(s => MapToSummary(s, candidate: null)).ToList();
 
             return data.Count == 0
                 ? r.GetResponse(data, 200, ["You have not submitted any assessments yet."])
@@ -122,7 +137,15 @@ namespace AIAssessment.Application.Services
         {
             var r = new Result();
             var submissions = await _submissionRepo.GetAllAsync();
-            var data = submissions.Select(s => MapToSummary(s, true)).ToList();
+
+            // CHANGED: was MapToSummary(s, true) which only produced a "User #5"
+            // placeholder. Now looks up the real candidate so admins see actual names.
+            var data = new System.Collections.Generic.List<SubmissionSummaryDto>();
+            foreach (var s in submissions)
+            {
+                var candidate = await _userManager.FindByIdAsync(s.UserId.ToString());
+                data.Add(MapToSummary(s, candidate));
+            }
 
             return data.Count == 0
                 ? r.GetResponse(data, 200, ["No submissions found."])
@@ -179,7 +202,10 @@ namespace AIAssessment.Application.Services
             ]);
         }
 
-        private static SubmissionSummaryDto MapToSummary(Submission s, bool includeCandidate) => new()
+        // CHANGED: was MapToSummary(Submission s, bool includeCandidate), which only
+        // produced a "User #5" / "userId:5" placeholder. Now takes the actual
+        // IdentityUser so admin views show the real name and email.
+        private static SubmissionSummaryDto MapToSummary(Submission s, IdentityUser<int>? candidate) => new()
         {
             SubmissionId = s.Id,
             AssessmentTitle = s.Assessment?.Title ?? string.Empty,
@@ -187,8 +213,8 @@ namespace AIAssessment.Application.Services
             MaxPossibleScore = s.Assessment?.Questions.Sum(q => q.MaxMarks) ?? 0,
             Status = s.Status.ToString(),
             SubmittedAt = s.SubmittedAt ?? DateTime.UtcNow,
-            CandidateName = includeCandidate ? $"User #{s.UserId}" : null,
-            CandidateEmail = includeCandidate ? $"userId:{s.UserId}" : null
+            CandidateName = candidate?.UserName,
+            CandidateEmail = candidate?.Email
         };
     }
 }

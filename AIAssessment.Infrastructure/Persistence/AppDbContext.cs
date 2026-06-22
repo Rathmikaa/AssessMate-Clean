@@ -17,7 +17,7 @@ public class AppDbContext : IdentityDbContext<IdentityUser<int>, IdentityRole<in
     public DbSet<Answer> Answers => Set<Answer>();
 
     // Auth token tables
-    public DbSet<UserToken> UserTokens => Set<UserToken>();
+    public DbSet<UserToken> JwtUserTokens => Set<UserToken>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
 
@@ -26,7 +26,10 @@ public class AppDbContext : IdentityDbContext<IdentityUser<int>, IdentityRole<in
     {
         base.OnModelCreating(modelBuilder);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
-
         modelBuilder.Ignore<User>();
+
+        // UserName now stores the display name — duplicates are expected, so this
+        // can't be unique at the DB level either (paired with EmailOnlyUserValidator).
+        modelBuilder.Entity<IdentityUser<int>>().HasIndex(u => u.NormalizedUserName).IsUnique(false);
     }
 }
