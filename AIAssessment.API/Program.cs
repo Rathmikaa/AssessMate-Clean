@@ -91,7 +91,7 @@ var app = builder.Build();
 
 await DependencyInjection.SeedDatabaseAsync(app.Services);
 
-// ── Middleware pipeline (ORDER MATTERS) 
+//Middleware pipeline 
 
 // 1. Global error handler — must be outermost
 app.UseMiddleware<ExceptionMiddleware>();
@@ -118,9 +118,9 @@ app.UseAuthentication();
 app.UseMiddleware<TokenValidationMiddleware>();
 
 // 4. Enforces [Authorize] and [Authorize(Roles="...")]
+
+
 app.UseAuthorization();
-
-
 app.MapControllers();
 app.MapHub<AssessmentMonitorHub>("/hubs/assessment-monitor");
 app.Run();

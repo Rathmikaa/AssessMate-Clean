@@ -11,37 +11,33 @@ namespace AIAssessment.API.Controllers
     public class AuthController : BaseController
     {
         private readonly AuthService _authService;
-
         public AuthController(AuthService authService) => _authService = authService;
 
-        /// <summary>
-        /// Registers a new user with the provided details.
-        /// </summary>
-        /// <param name="dto"></param>
-        /// <returns></returns>
         [HttpPost("register")]
         public async Task<IActionResult> Register(RegisterDto dto)
             => ToResponse(await _authService.RegisterAsync(dto));
-        /// <summary>
-        /// login a user with the provided credentials and returns an authentication token if successful.
-        /// </summary>
-        /// <param name="dto"></param>
-        /// <returns></returns>
 
         [HttpPost("login")]
         public async Task<IActionResult> Login(LoginDto dto)
             => ToResponse(await _authService.LoginAsync(dto));
-        /// <summary>
-        /// logouts the user by invalidating the provided authentication token, effectively ending the user's session.
-        /// </summary>
-        /// <returns></returns>
+
+        [HttpPost("refresh")]
+        public async Task<IActionResult> Refresh(RefreshTokenDto dto)
+            => ToResponse(await _authService.RefreshAsync(dto));
+
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword(ForgotPasswordDto dto)
+            => ToResponse(await _authService.ForgotPasswordAsync(dto));
+
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword(ResetPasswordDto dto)
+            => ToResponse(await _authService.ResetPasswordAsync(dto));
 
         [HttpPost("logout")]
         [Authorize]
         public async Task<IActionResult> Logout()
         {
             var authHeader = Request.Headers.Authorization.ToString();
-
             if (string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith("Bearer "))
             {
                 var r = new Result();

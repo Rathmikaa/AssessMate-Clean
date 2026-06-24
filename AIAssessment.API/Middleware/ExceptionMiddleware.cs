@@ -9,7 +9,7 @@ namespace AIAssessment.API.Middleware;
 //   DomainException  → 400 Bad Request  (business rule violation, safe to show)
 //   Any other        → 500 Internal     (unexpected; generic message in production)
 
-public class ExceptionMiddleware 
+public class ExceptionMiddleware    
 {
     private readonly RequestDelegate _next;
     private readonly ILogger<ExceptionMiddleware> _logger;
