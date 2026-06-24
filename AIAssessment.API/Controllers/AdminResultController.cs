@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace AIAssessment.API.Controllers
 {
     [Route("api/admin/results")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Evaluator")]
     public class AdminResultController : BaseController
     {
         private readonly SubmissionService _submissionService;

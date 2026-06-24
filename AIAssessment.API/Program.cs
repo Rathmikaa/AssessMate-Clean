@@ -1,5 +1,15 @@
+// ── AIAssessment.API/Program.cs ───────────────────────────────────────────────
+// REPLACE your existing Program.cs with this file.
+//
+// What changed vs the original:
+//   • Added builder.Services.AddAuthorization(...) with named policies
+//     RequireSuperAdmin and RequireEvaluator.
+//   • Everything else is identical.
+// ─────────────────────────────────────────────────────────────────────────────
+
 using AIAssessment.API.Hubs;
 using AIAssessment.API.Middleware;
+using AIAssessment.Application.Common;
 using AIAssessment.Application.Interfaces.Services;
 using AIAssessment.Infrastructure;
 
@@ -30,12 +40,33 @@ builder.Configuration.AddInMemoryCollection(
     envOverrides.Where(kvp => !string.IsNullOrEmpty(kvp.Value)).ToList());
 
 
-
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddSignalR();
 builder.Services.AddScoped<IAssessmentMonitorNotifier, SignalRAssessmentMonitorNotifier>();
+
+
+//  NEW: named authorization policies
+// RequireSuperAdmin  → only SuperAdmin tokens pass
+// RequireEvaluator   → both Evaluator AND SuperAdmin tokens pass
+//                      (SuperAdmin inherits all Evaluator permissions)
+//
+// Usage in controllers:
+//   [Authorize(Policy = "RequireSuperAdmin")]
+//   [Authorize(Policy = "RequireEvaluator")]
+//
+// The SuperAdminController uses [Authorize(Roles = Roles.SuperAdmin)] directly,
+// but these policies are available for any fine-grained endpoint-level control.
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("RequireSuperAdmin", policy =>
+        policy.RequireRole(Roles.SuperAdmin));
+
+    options.AddPolicy("RequireEvaluator", policy =>
+        policy.RequireRole(Roles.Evaluator, Roles.SuperAdmin));
+});
+
 
 
 builder.Services.AddSwaggerGen(options =>
@@ -71,27 +102,30 @@ builder.Services.AddSwaggerGen(options =>
             Array.Empty<string>()
         }
     });
+
     var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
     options.IncludeXmlComments(xmlPath);
-
 });
 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
-        policy.WithOrigins("http://localhost:3000", "http://localhost:5173", "http://localhost:4200")
+        policy.WithOrigins(
+                  "http://localhost:3000",
+                  "http://localhost:5173",
+                  "http://localhost:4200")
               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials());
-                
 });
+
 
 var app = builder.Build();
 
 await DependencyInjection.SeedDatabaseAsync(app.Services);
 
-//Middleware pipeline 
+// Middleware pipeline
 
 // 1. Global error handler — must be outermost
 app.UseMiddleware<ExceptionMiddleware>();
@@ -113,14 +147,12 @@ app.UseCors("AllowFrontend");
 app.UseAuthentication();
 
 // 3. Checks the token still exists in UserTokens table.
-//    Must be AFTER UseAuthentication() (needs the token read first)
-//    and BEFORE UseAuthorization() (revoked tokens must be blocked before role checks)
+//    Must be AFTER UseAuthentication() and BEFORE UseAuthorization()
 app.UseMiddleware<TokenValidationMiddleware>();
 
-// 4. Enforces [Authorize] and [Authorize(Roles="...")]
-
-
+// 4. Enforces [Authorize] and [Authorize(Roles="...")] / [Authorize(Policy="...")]
 app.UseAuthorization();
+
 app.MapControllers();
 app.MapHub<AssessmentMonitorHub>("/hubs/assessment-monitor");
 app.Run();

@@ -13,6 +13,11 @@ namespace AIAssessment.API.Controllers
         private readonly AuthService _authService;
         public AuthController(AuthService authService) => _authService = authService;
 
+        /// <summary>
+        /// Public registration — always creates a Candidate account.
+        /// Evaluator accounts are created exclusively by SuperAdmin via
+        /// POST /api/superadmin/evaluators.
+        /// </summary>
         [HttpPost("register")]
         public async Task<IActionResult> Register(RegisterDto dto)
             => ToResponse(await _authService.RegisterAsync(dto));

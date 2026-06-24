@@ -15,6 +15,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using System.Text;
 
+
 namespace AIAssessment.Infrastructure;
 
 public static class DependencyInjection
@@ -99,6 +100,7 @@ public static class DependencyInjection
         services.AddScoped<SubmissionService>();
         services.AddScoped<QuestionService>();
         services.AddScoped<CandidateService>();
+        services.AddScoped<EvaluatorService>(); 
 
         return services;
     }

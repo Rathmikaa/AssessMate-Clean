@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace AIAssessment.API.Controllers
 {
     [Route("api/admin/candidates")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Evaluator")]
     public class AdminCandidateController : BaseController
     {
         private readonly CandidateService _candidateService;
