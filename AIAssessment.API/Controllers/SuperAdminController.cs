@@ -1,8 +1,4 @@
-﻿// ── AIAssessment.API/Controllers/SuperAdminController.cs ─────────────────────
-// NEW FILE — place next to AuthController.cs
-// ─────────────────────────────────────────────────────────────────────────────
-
-using AIAssessment.Application.Common;
+﻿using AIAssessment.Application.Common;
 using AIAssessment.Application.DTOs.Auth;
 using AIAssessment.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
