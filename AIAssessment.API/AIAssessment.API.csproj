@@ -22,8 +22,4 @@
     <ProjectReference Include="..\AIAssessment.Application\AIAssessment.Application.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Extentions\" />
-  </ItemGroup>
-
 </Project>

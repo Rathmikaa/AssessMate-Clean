@@ -15,5 +15,7 @@ namespace AIAssessment.API.Hubs
         public Task CandidateSubmittedAsync(int assessmentId, string assessmentTitle, int candidateId, string candidateName, int score, int maxScore)
             => _hub.Clients.Group("Admins").SendAsync("CandidateSubmitted",
                 new { assessmentId, assessmentTitle, candidateId, candidateName, score, maxScore, at = DateTime.UtcNow });
+   
+    
     }
 }

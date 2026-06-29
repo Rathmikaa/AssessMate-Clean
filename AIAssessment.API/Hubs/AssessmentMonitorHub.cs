@@ -9,7 +9,7 @@ namespace AIAssessment.API.Hubs
         // Admin dashboards call this right after connecting.
         public async Task JoinAdminGroup()
         {
-            if (Context.User?.IsInRole("Admin") == true)
+            if (Context.User?.IsInRole("Evaluator") == true)
                 await Groups.AddToGroupAsync(Context.ConnectionId, "Admins");
         }
 

@@ -1,12 +1,3 @@
-// ── AIAssessment.API/Program.cs ───────────────────────────────────────────────
-// REPLACE your existing Program.cs with this file.
-//
-// What changed vs the original:
-//   • Added builder.Services.AddAuthorization(...) with named policies
-//     RequireSuperAdmin and RequireEvaluator.
-//   • Everything else is identical.
-// ─────────────────────────────────────────────────────────────────────────────
-
 using AIAssessment.API.Hubs;
 using AIAssessment.API.Middleware;
 using AIAssessment.Application.Common;
